@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+
+    <bean id="sampleRealm" class="com.tg.demo.shiroapi.shiro.realm.SampleRealm" ></bean>
+
+    <!--自定义SessionManager-->
+    <bean id="sessionManager" class="com.tg.demo.shiroapi.shiro.session.AccessTokenSessionManager" />
+
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="sampleRealm"/>
+        <property name="sessionManager" ref="sessionManager"/>
+    </bean>
+
+    <bean id="login" class="com.tg.demo.shiroapi.shiro.filter.LoginFilter"></bean>
+
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager" />
+        <property name="loginUrl" value="/login" />
+        <!--	TODO 待提取	-->
+        <property name="successUrl" value="/" />
+        <property name="unauthorizedUrl" value="/loginPrevent" />
+
+        <!--	初始配置，现采用自定义	-->
+        <property name="filterChainDefinitions" >
+            <value>
+                /login = anon
+                /loginPrevent = anon
+                /index = anon
+                /index.jsp = anon
+                /** = login
+            </value>
+        </property>
+        <property name="filters">
+            <util:map>
+                <entry key="login" value-ref="login"></entry>
+            </util:map>
+        </property>
+
+    </bean>
+
+    <!-- Shiro生命周期处理器-->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+
+    <!--使用@RequiresRoles,@RequiresPermissions等注解-->
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+          depends-on="lifecycleBeanPostProcessor"/>
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+</beans>
